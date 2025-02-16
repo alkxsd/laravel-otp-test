@@ -19,9 +19,6 @@ class OTPService
 
     /**
      * Handle OTP Validation
-     *
-     * @param OtpDTO $otpData
-     * @return boolean
      */
     public function validateOTP(OtpDTO $otpData): bool
     {
@@ -32,14 +29,15 @@ class OTPService
             ->where('expires_at', '>', now())
             ->first();
 
-        if (!$otp) {
-            $message = $this->isOTPExpired($otpData) ?
+        if (! $otp) {
+            $isOTPExpired = $this->isOTPExpired($otpData);
+            $message = $isOTPExpired ?
                 'OTP has expired. Click "Resend OTP" to get a new code.' :
                 'Invalid OTP code.';
-
+            $statusCode = $isOTPExpired ? 466 : 477;
             throw ValidationException::withMessages([
                 'code' => [$message],
-            ]);
+            ])->status($statusCode);
         }
 
         $otp->update(['verified_at' => now()]);
@@ -49,10 +47,6 @@ class OTPService
 
     /**
      * Generating OTP for a certain user
-     *
-     * @param User $user
-     * @param string $type
-     * @return OTP
      */
     public function generateOTP(User $user, string $type = 'email'): OTP
     {
@@ -78,21 +72,14 @@ class OTPService
 
     /**
      * Determine whether the user can request New OTP
-     *
-     * @param User $user
-     * @param string $type
-     * @return boolean
      */
     public function canRequestNewOTP(User $user, string $type = 'email'): bool
     {
-        return !Cache::has("otp_generation_{$user->id}_{$type}");
+        return ! Cache::has("otp_generation_{$user->id}_{$type}");
     }
 
     /**
      * Checks if OTP already expired
-     *
-     * @param OtpDTO $otpData
-     * @return boolean
      */
     public function isOTPExpired(OtpDTO $otpData): bool
     {
@@ -106,8 +93,6 @@ class OTPService
 
     /**
      * Clean up expired otps
-     *
-     * @return void
      */
     public function cleanupExpiredOTPs(): void
     {
