@@ -48,7 +48,7 @@ cp  .env.example  .env
 
 ```bash
 
-composer install --ignore-platform-reqs
+composer install
 
 
 
@@ -56,7 +56,7 @@ composer install --ignore-platform-reqs
 
 ./vendor/bin/sail  artisan  key:generate
 
-./vendor/bin/sail  artisan  migrate
+./vendor/bin/sail  artisan  migrate --seed
 
 ./vendor/bin/sail  npm  install
 
