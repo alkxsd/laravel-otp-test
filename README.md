@@ -15,7 +15,7 @@ This project uses Laravel Sail for easy setup and development:
 
 
 ### Prerequisites
-
+- Ensure port **80**, **8025** and **3306** were all free  up
 - Docker Desktop installed and running
 - Git
 - Composer - https://getcomposer.org/doc/00-intro.md
