@@ -14,6 +14,13 @@ A secure One-Time Password (OTP) verification system built with Laravel, Livewir
 This project uses Laravel Sail for easy setup and development:
 
 
+### Prerequisites
+
+- Docker Desktop installed and running
+- Git
+- Composer - https://getcomposer.org/doc/00-intro.md
+
+
 
 1. Clone the repository:
 
