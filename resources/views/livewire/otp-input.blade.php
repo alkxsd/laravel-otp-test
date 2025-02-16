@@ -26,6 +26,11 @@ class extends Component {
 
     public function mount(string $type = 'email'): void
     {
+        if (!session()->get('requires_otp', false)) {
+            $this->redirect(route('welcome'));
+            return;
+        }
+
         $this->type = $type;
         $this->checkRateLimit();
     }
@@ -142,9 +147,12 @@ class extends Component {
 
             RateLimiter::clear($key);
             $this->success = true;
-            session()->forget('requires_otp');
-            $this->dispatch('otp-verified', message: 'OTP verified successfully');
 
+            // Clear the OTP requirement from session before redirecting
+            session()->forget('requires_otp');
+            session()->regenerate();
+
+            $this->dispatch('otp-verified', message: 'OTP verified successfully');
             $this->redirect('/');
         } catch (\Exception $e) {
             RateLimiter::hit($key, self::DECAY_SECONDS);
@@ -223,13 +231,6 @@ class extends Component {
         }
     }"
 >
-
-    @if($isRateLimited)
-        <livewire:components.alert-box
-            type="error"
-            :message="'Rate limit in effect. Please wait ' . $rateLimitExpiresIn . ' seconds.'"
-        />
-    @endif
 
     @if($successMessage)
         <livewire:components.alert-box

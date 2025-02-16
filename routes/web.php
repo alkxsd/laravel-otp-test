@@ -11,7 +11,7 @@ Volt::route('/login', 'login')
 // OTP verification route
 Volt::route('/verify-otp', 'otp-input')
     ->name('verify')
-    ->middleware(['auth']);
+    ->middleware(['auth', 'otp.verify']);
 
 // Protected routes
 Volt::route('/', 'welcome')

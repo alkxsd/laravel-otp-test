@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OTP;
 use App\Models\User;
+use App\Notifications\OTPNotification;
 use App\DataTransferObjects\OtpDTO;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
@@ -50,7 +51,7 @@ class OTPService
      */
     public function generateOTP(User $user, string $type = 'email'): OTP
     {
-        // Clear all previous otp before creating new
+        // Clear all expired otp before creating new
         $this->cleanupExpiredOTPs($user);
 
         $cacheKey = "otp_generation_{$user->id}_{$type}";
@@ -70,7 +71,25 @@ class OTPService
             ->whereNull('verified_at')
             ->update(['expires_at' => now()]);
 
-        return OTP::createForUser($user, $type);
+        $otp = OTP::createForUser($user, $type);
+
+        try {
+            $user->notify(new OTPNotification(
+                code: $otp->code,
+                expiresInMinutes: 15
+            ));
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP notification', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            throw ValidationException::withMessages([
+                'code' => ['Failed to send OTP. Please try again.'],
+            ]);
+        }
+
+        return $otp;
     }
 
     /**
@@ -99,9 +118,8 @@ class OTPService
      */
     public function cleanupExpiredOTPs(User $user): void
     {
-        $this->otp->where('created_at', '<', now())
+        $this->otp->where('expires_at', '<', now())
             ->where('user_id', $user->id)
-            ->whereNull('verified_at')
             ->delete();
     }
 }

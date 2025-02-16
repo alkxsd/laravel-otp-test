@@ -13,18 +13,21 @@ class OTPVerify
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip OTP verification for login and verify-otp routes
-        if ($request->is('login') || $request->is('verify-otp')) {
-            return $next($request);
-        }
-
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 
-        // If OTP verification is required and user is not on verify page
-        if (session()->get('requires_otp', false)) {
+        $requiresOTP = session()->get('requires_otp', false);
+        $isVerifyRoute = $request->routeIs('verify');
+
+        // If OTP is required and user is not on verify page
+        if ($requiresOTP && !$isVerifyRoute) {
             return redirect()->route('verify');
+        }
+
+        // If OTP is not required and user tries to access verify page
+        if (!$requiresOTP && $isVerifyRoute) {
+            return redirect()->route('welcome');
         }
 
         return $next($request);
