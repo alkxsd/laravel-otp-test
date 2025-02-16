@@ -28,10 +28,10 @@
 
                     @auth
                         <div class="flex items-center space-x-4">
-                            <span class="text-gray-700">{{ Auth::user()->name }}</span>
+                            <span class="text-gray-700 text-sm">Howdy, {{ Auth::user()->name }}!</span>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="text-gray-600 hover:text-gray-900">
+                                <button type="submit" class="text-blue-500 hover:text-blue-800">
                                     Logout
                                 </button>
                             </form>

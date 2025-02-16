@@ -3,10 +3,6 @@
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 // Public routes
 Volt::route('/login', 'login')
     ->name('login')

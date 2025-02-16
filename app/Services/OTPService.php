@@ -50,6 +50,9 @@ class OTPService
      */
     public function generateOTP(User $user, string $type = 'email'): OTP
     {
+        // Clear all previous otp before creating new
+        $this->cleanupExpiredOTPs($user);
+
         $cacheKey = "otp_generation_{$user->id}_{$type}";
 
         if (Cache::has($cacheKey)) {
@@ -94,8 +97,11 @@ class OTPService
     /**
      * Clean up expired otps
      */
-    public function cleanupExpiredOTPs(): void
+    public function cleanupExpiredOTPs(User $user): void
     {
-        $this->otp->where('expires_at', '<', now())->delete();
+        $this->otp->where('created_at', '<', now())
+            ->where('user_id', $user->id)
+            ->whereNull('verified_at')
+            ->delete();
     }
 }
