@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Forms;
 
-use App\Services\OTPService;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Form;
+use App\Services\OTPService;
 use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\Auth;
 
 class LoginForm extends Form
 {

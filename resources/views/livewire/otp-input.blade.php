@@ -18,6 +18,8 @@ class extends Component {
     public bool $isRateLimited = false;
     public ?int $rateLimitExpiresIn = null;
 
+    public ?string $successMessage = '';
+
     private const MAX_ATTEMPTS = 5;
     private const DECAY_SECONDS = 30;
 
@@ -99,13 +101,15 @@ class extends Component {
         $this->resending = true;
         $this->error = null;
 
+        $this->successMessage = null;
+
         try {
             $otpService = app(OTPService::class);
             $otpService->generateOTP(auth()->user(), $this->type);
 
             $this->digits = array_fill(0, 6, '');
             $this->showResend = false;
-            $this->dispatch('otp-resent', message: 'A new OTP has been sent to your ' . $this->type);
+            $this->successMessage = 'A new verification code has been sent to your ' . $this->type;
         } catch (\Exception $e) {
             $this->error = $e->getMessage();
         } finally {
@@ -142,20 +146,14 @@ class extends Component {
             $this->dispatch('otp-verified', message: 'OTP verified successfully');
 
             $this->redirect('/');
-        } catch (ValidationException $e) {
+        } catch (\Exception $e) {
             RateLimiter::hit($key, self::DECAY_SECONDS);
             $this->error = $e->getMessage();
-
-            if (str_contains($e->getMessage(), 'expired')) {
+            if ($e->status == 466) {
                 $otpService = app(OTPService::class);
                 $this->showResend = $otpService->canRequestNewOTP(auth()->user(), $this->type);
             }
 
-            $this->checkRateLimit();
-            $this->dispatch('otp-error');
-        } catch (\Exception $e) {
-            RateLimiter::hit($key, self::DECAY_SECONDS);
-            $this->error = $e->getMessage();
             $this->checkRateLimit();
             $this->dispatch('otp-error');
         } finally {
@@ -225,15 +223,26 @@ class extends Component {
         }
     }"
 >
+
     @if($isRateLimited)
-        <div class="text-center mt-4">
-            <div class="inline-flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 rounded-md">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>Rate limit in effect. Please wait {{ $rateLimitExpiresIn }} seconds.</span>
-            </div>
-        </div>
+        <livewire:components.alert-box
+            type="error"
+            :message="'Rate limit in effect. Please wait ' . $rateLimitExpiresIn . ' seconds.'"
+        />
+    @endif
+
+    @if($successMessage)
+        <livewire:components.alert-box
+            type="success"
+            :message="$successMessage"
+        />
+    @endif
+
+    @if($error)
+        <livewire:components.alert-box
+            type="error"
+            :message="$error"
+        />
     @endif
 
     <div class="mb-4 text-center">
@@ -266,11 +275,6 @@ class extends Component {
             >
         @endforeach
     </div>
-
-
-    @if($error)
-        <div class="text-red-500 text-center mb-4">{{ $error }}</div>
-    @endif
 
 
     @if($showResend && !$isRateLimited)

@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,5 +27,6 @@ Route::post('/logout', function () {
     Auth::logout();
     session()->invalidate();
     session()->regenerateToken();
+
     return redirect('/login');
 })->name('logout');
