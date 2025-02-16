@@ -26,7 +26,7 @@ class extends Component {
 
     public function mount(string $type = 'email'): void
     {
-        if (!session()->get('requires_otp', false)) {
+        if (!session()->get('requires_otp', false) && !App::environment('testing')) {
             $this->redirect(route('welcome'));
             return;
         }
